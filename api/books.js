@@ -17,8 +17,8 @@ module.exports = async function bookService(req, res) {
 
   const { action, id } = parsed;
 
-  if (req.method !== 'GET' && req.method !== 'POST' && req.method !== 'PUT') {
-    send405(res, 'GET, POST, PUT');
+  if (req.method !== 'GET' && req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'DELETE') {
+    send405(res, 'GET, POST, PUT, DELETE');
     return;
   }
 
@@ -26,20 +26,6 @@ module.exports = async function bookService(req, res) {
   if (action === 'list') {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify(books));
-    return;
-  }
-
-  // GET /api/books/read/:id
-  if (action === 'read' && id !== null) {
-    const book = books.find(b => b.id === id);
-
-    if (!book) {
-      send404(res);
-      return;
-    }
-
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(book));
     return;
   }
 
@@ -62,11 +48,25 @@ module.exports = async function bookService(req, res) {
     }
   }
 
-  // PUT /api/books/update/:id
-  if (action === 'update' && id !== null) {
+  // GET /api/books/read/:id
+  if (action === 'read' && id !== null) {
     const book = books.find(b => b.id === id);
 
     if (!book) {
+      send404(res);
+      return;
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(book));
+    return;
+  }
+
+  // PUT /api/books/update/:id
+  if (action === 'update' && id !== null) {
+    const index = books.findIndex(b => b.id === id);
+
+    if (index === -1) {
       send404(res);
       return;
     }
@@ -82,6 +82,21 @@ module.exports = async function bookService(req, res) {
       res.end(err.message);
       return;
     }
+  }
+
+  // DELETE /api/books/delete/:id
+  if (action === 'delete' && id !== null) {
+    const index = books.findIndex(b => b.id === id);
+
+    if (index === -1) {
+      send404(res);
+      return;
+    }
+
+    books.splice(index, 1);
+    res.statusCode = 204;
+    res.end();
+    return;
   }
 
   send404(res);
